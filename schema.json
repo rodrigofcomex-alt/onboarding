@@ -1,0 +1,160 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Firestore Marketing Agency Restaurant Client Schema",
+  "description": "Definição do esquema de coleções e subcoleções do Firestore para o Portal de Onboarding e Gestão.",
+  "collections": {
+    "clientes": {
+      "description": "Coleção raiz contendo os dados cadastrais e as configurações de cada restaurante cliente.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID exclusivo do documento do cliente (geralmente corresponde ao UID do Firebase Auth)."
+        },
+        "nome": {
+          "type": "string",
+          "description": "Nome do restaurante / Marca do cliente (ex: Pizzaria Bella Italia)."
+        },
+        "email": {
+          "type": "string",
+          "description": "E-mail de login e contato do cliente."
+        },
+        "responsavel": {
+          "type": "string",
+          "description": "Nome do proprietário ou gerente responsável (ex: Carlos Silva)."
+        },
+        "telefone": {
+          "type": "string",
+          "description": "Telefone de contato no formato WhatsApp (ex: (11) 98765-4321)."
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "URL da imagem da logomarca do restaurante (armazenada no Firebase Storage ou URL externa)."
+        },
+        "linkFinanceiro": {
+          "type": "string",
+          "description": "Link externo para o portal financeiro do cliente (ex: Asaas, Iugu, faturamento próprio)."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ativo", "inativo"],
+          "description": "Estado da conta do cliente. Clientes inativos não conseguem acessar o portal."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["client", "admin"],
+          "description": "Nível de acesso do usuário. Clientes comuns usam 'client', a agência usa 'admin'."
+        },
+        "dataCriacao": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Data e hora de criação do cliente (Armazenada como Timestamp no Firestore)."
+        }
+      },
+      "required": ["id", "nome", "email", "responsavel", "status", "role", "dataCriacao"],
+      "subcollections": {
+        "passos": {
+          "description": "Subcoleção contendo os passos de onboarding do cliente. Combina passos macro e micro.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "ID único do passo de onboarding."
+            },
+            "macro": {
+              "type": "string",
+              "description": "Categoria macro do onboarding (ex: 'Setup Inicial', 'Identidade Visual', 'Redes Sociais', 'Campanhas')."
+            },
+            "titulo": {
+              "type": "string",
+              "description": "Descrição do micro passo / tarefa específica (ex: 'Enviar fotos em alta resolução do cardápio')."
+            },
+            "descricao": {
+              "type": "string",
+              "description": "Instruções detalhadas para o cliente sobre o que fazer neste passo."
+            },
+            "status": {
+              "type": "string",
+              "enum": ["Pendente", "Concluido"],
+              "description": "Estado atual do micro passo."
+            },
+            "linkAcao": {
+              "type": "string",
+              "description": "Link externo para ação do cliente se estiver Pendente (ex: Link do Drive, formulário de cadastro, Typeform)."
+            },
+            "textoBotao": {
+              "type": "string",
+              "description": "Rótulo amigável para o botão de ação (ex: 'Enviar Fotos', 'Preencher Formulário')."
+            },
+            "ordem": {
+              "type": "integer",
+              "description": "Número de ordenação sequencial para exibição no painel (ex: 1, 2, 3)."
+            }
+          },
+          "required": ["id", "macro", "titulo", "status", "ordem"]
+        },
+        "financeiro": {
+          "description": "Subcoleção contendo o histórico de faturas e pagamentos mensais do cliente.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "ID único da fatura."
+            },
+            "mesRef": {
+              "type": "string",
+              "description": "Mês e ano de referência da fatura (ex: 'Junho/2026')."
+            },
+            "valor": {
+              "type": "number",
+              "description": "Valor monetário da mensalidade/fatura (ex: 1500.00)."
+            },
+            "vencimento": {
+              "type": "string",
+              "format": "date",
+              "description": "Data de vencimento do boleto/PIX (Armazenada como Timestamp ou string yyyy-mm-dd)."
+            },
+            "status": {
+              "type": "string",
+              "enum": ["Pago", "Pendente", "Atrasado"],
+              "description": "Estado do pagamento."
+            },
+            "linkFatura": {
+              "type": "string",
+              "description": "Link para download do PDF da fatura ou chave PIX/código de barras."
+            }
+          },
+          "required": ["id", "mesRef", "valor", "vencimento", "status"]
+        },
+        "relatorios": {
+          "description": "Subcoleção contendo os links de relatórios mensais de marketing gerados para o cliente.",
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "ID único do relatório."
+            },
+            "titulo": {
+              "type": "string",
+              "description": "Título descritivo do relatório (ex: 'Performance de Tráfego Pago - Maio/2026')."
+            },
+            "mesRef": {
+              "type": "string",
+              "description": "Mês de referência (ex: 'Maio/2026')."
+            },
+            "url": {
+              "type": "string",
+              "description": "URL de download do relatório em PDF (armazenado no Firebase Storage ou externo)."
+            },
+            "dataUpload": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Data de upload do relatório (Armazenada como Timestamp no Firestore)."
+            }
+          },
+          "required": ["id", "titulo", "mesRef", "url", "dataUpload"]
+        }
+      }
+    }
+  }
+}
