@@ -49,6 +49,41 @@ if (isFirebaseConfigured) {
   console.log("ℹ️ Variáveis do Firebase ausentes. Rodando em MODO DEMO com localStorage.");
 }
 
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return localStorage.getItem(key);
+      }
+    } catch (e) {
+      console.warn("localStorage is not accessible:", e);
+    }
+    return null;
+  },
+  setItem: (key, value) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, value);
+        return true;
+      }
+    } catch (e) {
+      console.warn("localStorage is not accessible:", e);
+    }
+    return false;
+  },
+  removeItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(key);
+        return true;
+      }
+    } catch (e) {
+      console.warn("localStorage is not accessible:", e);
+    }
+    return false;
+  }
+};
+
 // ==========================================
 // UNIFIED DB SERVICE (Firebase ou Mock)
 // ==========================================
@@ -158,7 +193,7 @@ export const dbService = {
       const admin = admins.find(a => a.email.toLowerCase() === email.toLowerCase());
       if (admin && admin.senha === password) {
         const user = { uid: `admin-${admin.email}`, email: admin.email, role: "admin", nome: admin.nome };
-        localStorage.setItem("portal_session", JSON.stringify(user));
+        safeLocalStorage.setItem("portal_session", JSON.stringify(user));
         return user;
       }
       
@@ -166,7 +201,7 @@ export const dbService = {
       const client = clients.find(c => c.email.toLowerCase() === email.toLowerCase());
       if (client && (client.senha === password || (client.primeiroAcesso && password === "123456"))) {
         const user = { uid: client.id, email, role: "client", clientId: client.id };
-        localStorage.setItem("portal_session", JSON.stringify(user));
+        safeLocalStorage.setItem("portal_session", JSON.stringify(user));
         return user;
       }
 
@@ -178,7 +213,7 @@ export const dbService = {
     if (dbService.isFirebase) {
       await signOut(auth);
     } else {
-      localStorage.removeItem("portal_session");
+      safeLocalStorage.removeItem("portal_session");
     }
   },
 
@@ -188,12 +223,13 @@ export const dbService = {
         if (user) {
           const defaultAdmins = ["comercial1.emphasis@gmail.com", "mesocialmedia16@gmail.com"];
           let role = "client";
+          const userEmail = user.email?.toLowerCase() || "";
           
-          if (defaultAdmins.includes(user.email.toLowerCase())) {
+          if (userEmail && defaultAdmins.includes(userEmail)) {
             role = "admin";
-          } else {
+          } else if (userEmail) {
             try {
-              const q = query(collection(firestore, "administradores"), where("email", "==", user.email.toLowerCase()));
+              const q = query(collection(firestore, "administradores"), where("email", "==", userEmail));
               const snap = await getDocs(q);
               if (!snap.empty) {
                 role = "admin";
@@ -214,8 +250,13 @@ export const dbService = {
       });
     } else {
       if (typeof window !== "undefined") {
-        const session = localStorage.getItem("portal_session");
-        callback(session ? JSON.parse(session) : null);
+        try {
+          const session = safeLocalStorage.getItem("portal_session");
+          callback(session ? JSON.parse(session) : null);
+        } catch (e) {
+          console.error("Erro ao ler portal_session do localStorage:", e);
+          callback(null);
+        }
       } else {
         callback(null);
       }

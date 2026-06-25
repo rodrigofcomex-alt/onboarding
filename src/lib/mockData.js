@@ -1,5 +1,40 @@
 // Banco de Dados Simulado (Mock Database) salvo no LocalStorage para testes e demonstração offline.
 
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return localStorage.getItem(key);
+      }
+    } catch (e) {
+      console.warn("localStorage is not accessible:", e);
+    }
+    return null;
+  },
+  setItem: (key, value) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, value);
+        return true;
+      }
+    } catch (e) {
+      console.warn("localStorage is not accessible:", e);
+    }
+    return false;
+  },
+  removeItem: (key) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.removeItem(key);
+        return true;
+      }
+    } catch (e) {
+      console.warn("localStorage is not accessible:", e);
+    }
+    return false;
+  }
+};
+
 const INITIAL_CLIENTS = [
   {
     id: "hamburgueria-burger-craft",
@@ -247,19 +282,19 @@ const INITIAL_CLIENTS = [
 // Helper para inicializar dados na primeira execução
 const initializeMockData = () => {
   if (typeof window !== 'undefined') {
-    const existing = localStorage.getItem('portal_marketing_clients');
+    const existing = safeLocalStorage.getItem('portal_marketing_clients');
     if (!existing) {
-      localStorage.setItem('portal_marketing_clients', JSON.stringify(INITIAL_CLIENTS));
+      safeLocalStorage.setItem('portal_marketing_clients', JSON.stringify(INITIAL_CLIENTS));
     } else {
       try {
         const parsed = JSON.parse(existing);
         const needsReset = parsed.some(c => c.primeiroAcesso === undefined);
         if (needsReset) {
-          localStorage.setItem('portal_marketing_clients', JSON.stringify(INITIAL_CLIENTS));
+          safeLocalStorage.setItem('portal_marketing_clients', JSON.stringify(INITIAL_CLIENTS));
           console.log("⚡ Simulador atualizado: Mock data resetado para suporte a Primeiro Acesso.");
         }
       } catch (e) {
-        localStorage.setItem('portal_marketing_clients', JSON.stringify(INITIAL_CLIENTS));
+        safeLocalStorage.setItem('portal_marketing_clients', JSON.stringify(INITIAL_CLIENTS));
       }
     }
   }
@@ -268,13 +303,18 @@ const initializeMockData = () => {
 export const getMockClients = () => {
   initializeMockData();
   if (typeof window === 'undefined') return INITIAL_CLIENTS;
-  const data = localStorage.getItem('portal_marketing_clients');
-  return data ? JSON.parse(data) : INITIAL_CLIENTS;
+  try {
+    const data = safeLocalStorage.getItem('portal_marketing_clients');
+    return data ? JSON.parse(data) : INITIAL_CLIENTS;
+  } catch (e) {
+    console.error("Erro ao ler portal_marketing_clients:", e);
+    return INITIAL_CLIENTS;
+  }
 };
 
 export const saveMockClients = (clients) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('portal_marketing_clients', JSON.stringify(clients));
+    safeLocalStorage.setItem('portal_marketing_clients', JSON.stringify(clients));
     window.dispatchEvent(new Event('mock_db_update')); // Notifica componentes ativos
   }
 };
@@ -460,7 +500,7 @@ export const registerMockFirstAccess = (email, password) => {
   saveMockClients(updatedClients);
   const client = updatedClients.find(c => c.email === email);
   const user = { uid: client.id, email, role: "client", clientId: client.id };
-  localStorage.setItem("portal_session", JSON.stringify(user));
+  safeLocalStorage.setItem("portal_session", JSON.stringify(user));
   return user;
 };
 
@@ -470,9 +510,9 @@ export const registerMockFirstAccess = (email, password) => {
 
 const initializeMockAdmins = () => {
   if (typeof window !== 'undefined') {
-    const existing = localStorage.getItem('portal_marketing_admins');
+    const existing = safeLocalStorage.getItem('portal_marketing_admins');
     if (!existing) {
-      localStorage.setItem('portal_marketing_admins', JSON.stringify([
+      safeLocalStorage.setItem('portal_marketing_admins', JSON.stringify([
         { email: "comercial1.emphasis@gmail.com", senha: "12Rod34#", nome: "Comercial Emphasis" },
         { email: "mesocialmedia16@gmail.com", senha: "Casa920125#", nome: "Social Media" }
       ]));
@@ -488,13 +528,18 @@ export const getMockAdmins = () => {
       { email: "mesocialmedia16@gmail.com", senha: "Casa920125#", nome: "Social Media" }
     ];
   }
-  const data = localStorage.getItem('portal_marketing_admins');
-  return data ? JSON.parse(data) : [];
+  try {
+    const data = safeLocalStorage.getItem('portal_marketing_admins');
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    console.error("Erro ao ler portal_marketing_admins:", e);
+    return [];
+  }
 };
 
 export const saveMockAdmins = (admins) => {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('portal_marketing_admins', JSON.stringify(admins));
+    safeLocalStorage.setItem('portal_marketing_admins', JSON.stringify(admins));
     window.dispatchEvent(new Event('mock_db_update'));
   }
 };
