@@ -139,17 +139,18 @@ export const dbService = {
         
         // Caso contrário, é cliente
         const userCredential = await signInWithEmailAndPassword(auth, emailLower, password);
-        // Verificar se realmente existe no Firestore como cliente
-        const clientDocRef = doc(firestore, "clientes", userCredential.user.uid);
-        const clientSnap = await getDoc(clientDocRef);
+        // Buscar no Firestore o documento correspondente por email para obter o clientId correto
+        const qClient = query(collection(firestore, "clientes"), where("email", "==", emailLower));
+        const clientSnapshot = await getDocs(qClient);
         
-        if (clientSnap.exists()) {
-          const clientData = clientSnap.data();
+        if (!clientSnapshot.empty) {
+          const clientDoc = clientSnapshot.docs[0];
+          const clientData = clientDoc.data();
           if (clientData.status === "inativo") {
             await signOut(auth);
             throw new Error("Sua conta está desativada. Fale com o administrador.");
           }
-          return { uid: userCredential.user.uid, email: emailLower, role: "client", clientId: userCredential.user.uid };
+          return { uid: userCredential.user.uid, email: emailLower, role: "client", clientId: clientDoc.id };
         } else {
           // Se logou com sucesso no Auth mas não é cliente, pode ser admin registrado no Auth pelo admin panel
           const adminDocRef = doc(firestore, "administradores", userCredential.user.uid);
@@ -157,6 +158,8 @@ export const dbService = {
           if (adminSnap.exists()) {
             return { uid: userCredential.user.uid, email: emailLower, role: "admin" };
           }
+          // Se não for nenhum dos dois, desloga por segurança
+          await signOut(auth);
         }
         
         throw new Error("Permissão insuficiente ou cadastro inexistente.");
@@ -224,6 +227,7 @@ export const dbService = {
           const defaultAdmins = ["comercial1.emphasis@gmail.com", "mesocialmedia16@gmail.com"];
           let role = "client";
           const userEmail = user.email?.toLowerCase() || "";
+          let clientId = null;
           
           if (userEmail && defaultAdmins.includes(userEmail)) {
             role = "admin";
@@ -233,16 +237,24 @@ export const dbService = {
               const snap = await getDocs(q);
               if (!snap.empty) {
                 role = "admin";
+              } else {
+                // É cliente. Vamos buscar o id real do documento do Firestore
+                const qClient = query(collection(firestore, "clientes"), where("email", "==", userEmail));
+                const snapClient = await getDocs(qClient);
+                if (!snapClient.empty) {
+                  clientId = snapClient.docs[0].id;
+                }
               }
             } catch (err) {
-              console.error("Erro ao checar role de admin no Firestore:", err);
+              console.error("Erro ao checar no Firestore:", err);
             }
           }
           
           callback({
             uid: user.uid,
             email: user.email,
-            role: role
+            role: role,
+            clientId: clientId
           });
         } else {
           callback(null);
