@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -38,6 +38,14 @@ export default function AdminPanel({
 }) {
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || '');
   const [adminTab, setAdminTab] = useState('clients'); // 'clients' | 'board' | 'content'
+
+  useEffect(() => {
+    if (clients.length > 0 && (!selectedClientId || !clients.some(c => c.id === selectedClientId))) {
+      setSelectedClientId(clients[0].id);
+    } else if (clients.length === 0 && selectedClientId) {
+      setSelectedClientId('');
+    }
+  }, [clients, selectedClientId]);
 
   // Estados para formulários
   const [isClientModalOpen, setIsClientModalOpen] = useState(false);
@@ -309,22 +317,24 @@ export default function AdminPanel({
         </div>
         
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative">
-            <select
-              value={selectedClientId}
-              onChange={(e) => setSelectedClientId(e.target.value)}
-              className="appearance-none bg-slate-900 border border-white/10 text-white text-sm rounded-xl px-4 py-3 pr-10 focus:outline-none focus:border-amber-500/50 w-full sm:w-64 cursor-pointer font-medium"
-            >
-              {clients.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.nome} ({c.status})
-                </option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-              <Layers size={14} />
+          {clients.length > 0 && (
+            <div className="relative">
+              <select
+                value={selectedClientId}
+                onChange={(e) => setSelectedClientId(e.target.value)}
+                className="appearance-none bg-slate-900 border border-white/10 text-white text-sm rounded-xl px-4 py-3 pr-10 focus:outline-none focus:border-amber-500/50 w-full sm:w-64 cursor-pointer font-medium"
+              >
+                {clients.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome} ({c.status})
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                <Layers size={14} />
+              </div>
             </div>
-          </div>
+          )}
 
           <button
             onClick={() => handleOpenClientModal('create')}
@@ -374,6 +384,21 @@ export default function AdminPanel({
           {adminTab === 'admins' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />}
         </button>
       </div>
+
+      {/* MENSAGEM: NENHUM CLIENTE CADASTRADO */}
+      {clients.length === 0 && adminTab !== 'admins' && (
+        <div className="text-center py-20 bg-white/2 border border-white/5 rounded-3xl space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mx-auto animate-pulse">
+            <UserPlus size={24} />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-white">Nenhum cliente cadastrado</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+              Para gerenciar dados, relatórios e etapas de onboarding, crie o primeiro restaurante parceiro clicando no botão **Novo Cliente** acima.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* CONTEÚDO TAB: CADASTRO CLIENTE */}
       {adminTab === 'clients' && selectedClient && (

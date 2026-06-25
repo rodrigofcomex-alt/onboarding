@@ -174,33 +174,21 @@ export default function AdminPage() {
         {/* Área Principal de Conteúdo */}
         <main className="flex-1 overflow-y-auto px-6 pt-20 pb-10 lg:px-12 lg:py-12">
           <div className="max-w-5xl mx-auto">
-            {clients.length > 0 ? (
-              <AdminPanel
-                clients={clients}
-                admins={admins}
-                onCreateAdmin={handleCreateAdmin}
-                onDeleteAdmin={handleDeleteAdmin}
-                onUpdateStepStatus={handleUpdateStepStatus}
-                onSaveSteps={handleSaveSteps}
-                onCreateClient={handleCreateClient}
-                onUpdateClient={handleUpdateClient}
-                onDeleteClient={handleDeleteClient}
-                onAddInvoice={handleAddInvoice}
-                onDeleteInvoice={handleDeleteInvoice}
-                onAddReport={handleAddReport}
-                onDeleteReport={handleDeleteReport}
-              />
-            ) : (
-              <div className="text-center py-20 bg-white/5 border border-white/5 rounded-3xl space-y-4">
-                <p className="text-slate-400">Nenhum cliente cadastrado no portal.</p>
-                <button
-                  onClick={() => router.reload()}
-                  className="px-4 py-2 bg-indigo-600 rounded-xl hover:bg-indigo-500 font-semibold text-xs"
-                >
-                  Recarregar e Inicializar Dados Demo
-                </button>
-              </div>
-            )}
+            <AdminPanel
+              clients={clients}
+              admins={admins}
+              onCreateAdmin={handleCreateAdmin}
+              onDeleteAdmin={handleDeleteAdmin}
+              onUpdateStepStatus={handleUpdateStepStatus}
+              onSaveSteps={handleSaveSteps}
+              onCreateClient={handleCreateClient}
+              onUpdateClient={handleUpdateClient}
+              onDeleteClient={handleDeleteClient}
+              onAddInvoice={handleAddInvoice}
+              onDeleteInvoice={handleDeleteInvoice}
+              onAddReport={handleAddReport}
+              onDeleteReport={handleDeleteReport}
+            />
           </div>
         </main>
       </div>
